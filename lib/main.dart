@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'medicine.dart'; // our new data model file
+import 'medicine.dart';
 import 'health_screen.dart';
 import 'sos_screen.dart';
 import 'ai_screen.dart';
@@ -30,9 +30,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedNavIndex = 0;
+  bool _isLoading = true; // true while we're reading saved data
 
-  // Our list of medicines — this is now the single source of truth.
-  // Instead of hardcoding one card, we generate cards from this list.
   final List<Medicine> _medicines = [
     Medicine(
       name: 'Amlodipine 5mg',
@@ -57,8 +56,48 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
+  // initState() runs ONCE, when this screen is first created —
+  // before the first build(). It's the standard place to kick off
+  // any loading that needs to happen at startup.
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedData();
+  }
+
+  // initState() itself can't be async, so we call a separate async
+  // method from inside it — this is a very common Flutter pattern.
+  Future<void> _loadSavedData() async {
+    final takenNames = await MedicineStorage.loadTakenMedicineNames();
+
+    setState(() {
+      for (final med in _medicines) {
+        if (takenNames.contains(med.name)) {
+          med.isTaken = true;
+        }
+      }
+      _isLoading = false; // done loading, safe to show real content
+    });
+  }
+
+  // Call this any time a medicine's taken-status changes, so the
+  // saved data always reflects the current state.
+  void _saveData() {
+    MedicineStorage.saveTakenMedicines(_medicines);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // While loading, show a simple spinner instead of the real UI —
+    // prevents a flash of "nothing taken" before the saved data
+    // has actually been read.
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFFBF6EC),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFBF6EC),
       body: SafeArea(
@@ -92,8 +131,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHomeTab() {
-    // Count how many are taken, for the greeting subtitle — this is
-    // computed live from the list every time build() runs.
     final takenCount = _medicines.where((m) => m.isTaken).length;
 
     return SingleChildScrollView(
@@ -115,11 +152,6 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
           const SizedBox(height: 20),
-
-          // ---- Generate one card per medicine using a for loop ----
-          // Dart lets you put a `for` directly inside a list literal
-          // (this is called a "collection for"). For each medicine
-          // in _medicines, it builds a card widget and adds it here.
           for (final med in _medicines) ...[
             _medicineCard(med),
             const SizedBox(height: 12),
@@ -129,9 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Takes a Medicine object and returns a card widget for it.
-  // Because this same method is reused for every medicine, we only
-  // wrote the card UI once, no matter how many medicines exist.
   Widget _medicineCard(Medicine med) {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -176,12 +205,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // We mutate the object's field directly (it's
-                      // not `final`), then call setState so Flutter
-                      // knows to redraw with the new value.
                       setState(() {
                         med.isTaken = true;
                       });
+                      _saveData(); // persist immediately after change
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF7FA98D),
@@ -226,21 +253,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _placeholderTab(String label, IconData icon, Color color) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 48, color: color),
-          const SizedBox(height: 12),
-          Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text('Coming soon', style: TextStyle(color: Colors.grey[500])),
         ],
       ),
     );
