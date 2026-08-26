@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'medicine.dart'; // our new data model file
 import 'health_screen.dart';
 import 'sos_screen.dart';
+import 'ai_screen.dart';
 
 void main() {
   runApp(const CareMateApp());
@@ -67,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildHomeTab(),
             const HealthScreen(),
             const SosScreen(),
-            _placeholderTab('AI Assistant', Icons.smart_toy, const Color(0xFFE9A23B)),
+            const AiScreen(),
           ],
         ),
       ),
