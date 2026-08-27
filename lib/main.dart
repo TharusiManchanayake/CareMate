@@ -3,6 +3,8 @@ import 'medicine.dart';
 import 'health_screen.dart';
 import 'sos_screen.dart';
 import 'ai_screen.dart';
+import 'add_medicine_screen.dart';
+import 'history_screen.dart';
 
 void main() {
   runApp(const CareMateApp());
@@ -30,9 +32,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedNavIndex = 0;
-  bool _isLoading = true; // true while we're reading saved data
+  bool _isLoading = true;
 
-  final List<Medicine> _medicines = [
+  final List<Medicine> _defaultMedicines = [
     Medicine(
       name: 'Amlodipine 5mg',
       dosage: '1 tablet',
@@ -56,41 +58,50 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
-  // initState() runs ONCE, when this screen is first created —
-  // before the first build(). It's the standard place to kick off
-  // any loading that needs to happen at startup.
+  List<Medicine> _medicines = [];
+
   @override
   void initState() {
     super.initState();
     _loadSavedData();
   }
 
-  // initState() itself can't be async, so we call a separate async
-  // method from inside it — this is a very common Flutter pattern.
   Future<void> _loadSavedData() async {
-    final takenNames = await MedicineStorage.loadTakenMedicineNames();
+    final saved = await MedicineStorage.loadMedicines();
 
     setState(() {
-      for (final med in _medicines) {
-        if (takenNames.contains(med.name)) {
-          med.isTaken = true;
-        }
-      }
-      _isLoading = false; // done loading, safe to show real content
+      _medicines = saved ?? _defaultMedicines;
+      _isLoading = false;
     });
   }
 
-  // Call this any time a medicine's taken-status changes, so the
-  // saved data always reflects the current state.
   void _saveData() {
-    MedicineStorage.saveTakenMedicines(_medicines);
+    MedicineStorage.saveMedicines(_medicines);
+  }
+
+  Future<void> _openAddMedicineScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddMedicineScreen()),
+    );
+
+    if (result != null && result is Medicine) {
+      setState(() {
+        _medicines.add(result);
+      });
+      _saveData();
+    }
+  }
+
+  void _openHistoryScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const HistoryScreen()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // While loading, show a simple spinner instead of the real UI —
-    // prevents a flash of "nothing taken" before the saved data
-    // has actually been read.
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFFFBF6EC),
@@ -127,6 +138,13 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'AI'),
         ],
       ),
+      floatingActionButton: _selectedNavIndex == 0
+          ? FloatingActionButton(
+              backgroundColor: const Color(0xFF1E4038),
+              onPressed: _openAddMedicineScreen,
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
     );
   }
 
@@ -138,15 +156,23 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Good morning, Mary',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E4038),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Good morning, Mary',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1E4038),
+                ),
+              ),
+              IconButton(
+                onPressed: _openHistoryScreen,
+                icon: const Icon(Icons.history, color: Color(0xFF1E4038)),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
           Text(
             "You've taken $takenCount of ${_medicines.length} doses today",
             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
@@ -156,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _medicineCard(med),
             const SizedBox(height: 12),
           ],
+          const SizedBox(height: 70),
         ],
       ),
     );
@@ -208,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() {
                         med.isTaken = true;
                       });
-                      _saveData(); // persist immediately after change
+                      _saveData();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF7FA98D),
