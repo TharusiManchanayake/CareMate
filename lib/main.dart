@@ -5,6 +5,7 @@ import 'sos_screen.dart';
 import 'ai_screen.dart';
 import 'add_medicine_screen.dart';
 import 'history_screen.dart';
+import 'history_entry.dart';
 
 void main() {
   runApp(const CareMateApp());
@@ -77,6 +78,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _saveData() {
     MedicineStorage.saveMedicines(_medicines);
+  }
+
+  // Builds today's date/time strings and saves a new history entry.
+  // Kept simple with manual formatting — no extra package needed.
+  void _logHistory(Medicine med, String status) {
+    final now = DateTime.now();
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final dateStr = '${now.day} ${months[now.month - 1]}';
+
+    final hour12 = now.hour % 12 == 0 ? 12 : now.hour % 12;
+    final minuteStr = now.minute.toString().padLeft(2, '0');
+    final period = now.hour >= 12 ? 'PM' : 'AM';
+    final timeStr = '$hour12:$minuteStr $period';
+
+    HistoryStorage.addEntry(HistoryEntry(
+      medicineName: med.name,
+      date: dateStr,
+      time: timeStr,
+      status: status,
+    ));
   }
 
   Future<void> _openAddMedicineScreen() async {
@@ -236,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         med.isTaken = true;
                       });
                       _saveData();
+                      _logHistory(med, 'taken');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF7FA98D),
@@ -251,7 +276,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => debugPrint('Snoozed ${med.name}'),
+                    onPressed: () {
+                      _logHistory(med, 'snoozed');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${med.name} snoozed for 15 minutes')),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFBEBD2),
                       foregroundColor: const Color(0xFF93611B),
@@ -266,7 +296,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => debugPrint('Skipped ${med.name}'),
+                    onPressed: () {
+                      _logHistory(med, 'missed');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${med.name} marked as skipped')),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFBE3E0),
                       foregroundColor: const Color(0xFF9A362D),
