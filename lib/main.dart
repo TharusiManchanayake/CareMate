@@ -6,6 +6,8 @@ import 'ai_screen.dart';
 import 'add_medicine_screen.dart';
 import 'history_screen.dart';
 import 'history_entry.dart';
+import 'inventory_screen.dart';
+import 'doctor_notes_screen.dart';
 
 void main() {
   runApp(const CareMateApp());
@@ -42,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
       condition: 'Blood pressure',
       timing: 'after breakfast',
       time: '9:41 AM',
+      stockCount: 18,
     ),
     Medicine(
       name: 'Metformin 500mg',
@@ -49,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
       condition: 'Diabetes',
       timing: 'before lunch',
       time: '12:30 PM',
+      stockCount: 42,
     ),
     Medicine(
       name: 'Vitamin D 1000IU',
@@ -56,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
       condition: 'Supplement',
       timing: 'anytime',
       time: '1:00 PM',
+      stockCount: 5,
     ),
   ];
 
@@ -80,8 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
     MedicineStorage.saveMedicines(_medicines);
   }
 
-  // Builds today's date/time strings and saves a new history entry.
-  // Kept simple with manual formatting — no extra package needed.
   void _logHistory(Medicine med, String status) {
     final now = DateTime.now();
     const months = [
@@ -121,6 +124,20 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const HistoryScreen()),
+    );
+  }
+
+  void _openInventoryScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => InventoryScreen(medicines: _medicines)),
+    );
+  }
+
+  void _openDoctorNotesScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DoctorNotesScreen()),
     );
   }
 
@@ -191,9 +208,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFF1E4038),
                 ),
               ),
-              IconButton(
-                onPressed: _openHistoryScreen,
-                icon: const Icon(Icons.history, color: Color(0xFF1E4038)),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: _openDoctorNotesScreen,
+                    icon: const Icon(Icons.medical_information_outlined, color: Color(0xFF1E4038)),
+                  ),
+                  IconButton(
+                    onPressed: _openInventoryScreen,
+                    icon: const Icon(Icons.inventory_2_outlined, color: Color(0xFF1E4038)),
+                  ),
+                  IconButton(
+                    onPressed: _openHistoryScreen,
+                    icon: const Icon(Icons.history, color: Color(0xFF1E4038)),
+                  ),
+                ],
               ),
             ],
           ),
@@ -258,6 +287,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       setState(() {
                         med.isTaken = true;
+                        if (med.stockCount > 0) {
+                          med.stockCount--;
+                        }
                       });
                       _saveData();
                       _logHistory(med, 'taken');

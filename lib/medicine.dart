@@ -8,6 +8,7 @@ class Medicine {
   final String timing;
   final String time;
   bool isTaken;
+  int stockCount; // how many tablets/doses remain
 
   Medicine({
     required this.name,
@@ -16,10 +17,9 @@ class Medicine {
     required this.timing,
     required this.time,
     this.isTaken = false,
+    this.stockCount = 20, // sensible default for newly added medicines
   });
 
-  // Converts this Medicine into a plain Map (key-value pairs) —
-  // an intermediate format that's easy to turn into JSON text.
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -28,12 +28,10 @@ class Medicine {
       'timing': timing,
       'time': time,
       'isTaken': isTaken,
+      'stockCount': stockCount,
     };
   }
 
-  // A "factory constructor" — instead of building a Medicine the
-  // normal way, this one takes a Map (e.g. read back from storage)
-  // and reconstructs a Medicine object from it.
   factory Medicine.fromMap(Map<String, dynamic> map) {
     return Medicine(
       name: map['name'],
@@ -42,6 +40,9 @@ class Medicine {
       timing: map['timing'],
       time: map['time'],
       isTaken: map['isTaken'] ?? false,
+      // Fallback to 20 if old saved data doesn't have this field yet
+      // (e.g. medicines saved before we added stockCount).
+      stockCount: map['stockCount'] ?? 20,
     );
   }
 }
@@ -49,8 +50,6 @@ class Medicine {
 class MedicineStorage {
   static const _key = 'medicines_list';
 
-  // Converts the whole list of Medicines to Maps, then to one JSON
-  // string, then saves that single string.
   static Future<void> saveMedicines(List<Medicine> medicines) async {
     final prefs = await SharedPreferences.getInstance();
     final mapList = medicines.map((m) => m.toMap()).toList();
@@ -58,9 +57,6 @@ class MedicineStorage {
     await prefs.setString(_key, jsonString);
   }
 
-  // Reads the saved JSON string back, decodes it into a List of
-  // Maps, then rebuilds real Medicine objects from each Map.
-  // Returns null if nothing has ever been saved (first launch).
   static Future<List<Medicine>?> loadMedicines() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_key);
