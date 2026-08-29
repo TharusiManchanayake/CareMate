@@ -8,6 +8,7 @@ import 'history_screen.dart';
 import 'history_entry.dart';
 import 'inventory_screen.dart';
 import 'doctor_notes_screen.dart';
+import 'rx_scanner_screen.dart';
 
 void main() {
   runApp(const CareMateApp());
@@ -141,6 +142,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _openRxScannerScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RxScannerScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -208,8 +216,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFF1E4038),
                 ),
               ),
-              Row(
+              Wrap(
                 children: [
+                  IconButton(
+                    onPressed: _openRxScannerScreen,
+                    icon: const Icon(Icons.document_scanner_outlined, color: Color(0xFF1E4038)),
+                  ),
                   IconButton(
                     onPressed: _openDoctorNotesScreen,
                     icon: const Icon(Icons.medical_information_outlined, color: Color(0xFF1E4038)),
