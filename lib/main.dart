@@ -5,21 +5,18 @@ import 'medicine.dart';
 import 'health_screen.dart';
 import 'sos_screen.dart';
 import 'ai_screen.dart';
-import 'add_medicine_screen.dart';
 import 'history_screen.dart';
 import 'history_entry.dart';
 import 'inventory_screen.dart';
 import 'doctor_notes_screen.dart';
 import 'rx_scanner_screen.dart';
+import 'caregiver_pin_screen.dart';
 
 void main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
   runApp(const CareMateApp());
 }
 
@@ -93,41 +90,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _saveData() {
     MedicineStorage.saveMedicines(_medicines);
+    MedicineCloudSync.syncAllMedicines(_medicines);
   }
 
-  void _logHistory(Medicine med, String status) {
+  void _onCaregiverDataChanged() {
+    setState(() {});
+    _saveData();
+  }
+
+  String _currentTimeString() {
+    final now = DateTime.now();
+    final hour12 = now.hour % 12 == 0 ? 12 : now.hour % 12;
+    final minuteStr = now.minute.toString().padLeft(2, '0');
+    final period = now.hour >= 12 ? 'PM' : 'AM';
+    return '$hour12:$minuteStr $period';
+  }
+
+  String _currentDateString() {
     final now = DateTime.now();
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    final dateStr = '${now.day} ${months[now.month - 1]}';
-
-    final hour12 = now.hour % 12 == 0 ? 12 : now.hour % 12;
-    final minuteStr = now.minute.toString().padLeft(2, '0');
-    final period = now.hour >= 12 ? 'PM' : 'AM';
-    final timeStr = '$hour12:$minuteStr $period';
-
-    HistoryStorage.addEntry(HistoryEntry(
-      medicineName: med.name,
-      date: dateStr,
-      time: timeStr,
-      status: status,
-    ));
+    return '${now.day} ${months[now.month - 1]}';
   }
 
-  Future<void> _openAddMedicineScreen() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddMedicineScreen()),
-    );
-
-    if (result != null && result is Medicine) {
-      setState(() {
-        _medicines.add(result);
-      });
-      _saveData();
-    }
+  void _logHistory(Medicine med, String status) {
+    HistoryStorage.addEntry(HistoryEntry(
+      medicineName: med.name,
+      date: _currentDateString(),
+      time: _currentTimeString(),
+      status: status,
+    ));
   }
 
   void _openHistoryScreen() {
@@ -155,6 +149,20 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const RxScannerScreen()),
+    );
+  }
+
+  // Replaces the old direct "Add Medicine" access — now goes
+  // through the PIN gate first.
+  void _openCaregiverAccess() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CaregiverPinScreen(
+          medicines: _medicines,
+          onDataChanged: _onCaregiverDataChanged,
+        ),
+      ),
     );
   }
 
@@ -196,13 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'AI'),
         ],
       ),
-      floatingActionButton: _selectedNavIndex == 0
-          ? FloatingActionButton(
-              backgroundColor: const Color(0xFF1E4038),
-              onPressed: _openAddMedicineScreen,
-              child: const Icon(Icons.add, color: Colors.white),
-            )
-          : null,
+ 
     );
   }
 
@@ -243,6 +245,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: _openHistoryScreen,
                     icon: const Icon(Icons.history, color: Color(0xFF1E4038)),
                   ),
+                  IconButton(
+                    onPressed: _openCaregiverAccess,
+                    icon: const Icon(Icons.lock_outline, color: Color(0xFF1E4038)),
+                  ),
                 ],
               ),
             ],
@@ -256,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _medicineCard(med),
             const SizedBox(height: 12),
           ],
-          const SizedBox(height: 70),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -306,8 +312,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      final actualTime = _currentTimeString();
                       setState(() {
                         med.isTaken = true;
+                        med.time = actualTime;
                         if (med.stockCount > 0) {
                           med.stockCount--;
                         }

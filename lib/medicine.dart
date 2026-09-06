@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Medicine {
   final String name;
   final String dosage;
   final String condition;
   final String timing;
-  final String time;
+  String time;
   bool isTaken;
-  int stockCount; // how many tablets/doses remain
+  int stockCount;
 
   Medicine({
     required this.name,
@@ -17,7 +18,7 @@ class Medicine {
     required this.timing,
     required this.time,
     this.isTaken = false,
-    this.stockCount = 20, // sensible default for newly added medicines
+    this.stockCount = 20,
   });
 
   Map<String, dynamic> toMap() {
@@ -40,11 +41,11 @@ class Medicine {
       timing: map['timing'],
       time: map['time'],
       isTaken: map['isTaken'] ?? false,
-      // Fallback to 20 if old saved data doesn't have this field yet
-      // (e.g. medicines saved before we added stockCount).
       stockCount: map['stockCount'] ?? 20,
     );
   }
+
+  String get docId => name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
 }
 
 class MedicineStorage {
@@ -65,5 +66,20 @@ class MedicineStorage {
 
     final List<dynamic> decoded = jsonDecode(jsonString);
     return decoded.map((item) => Medicine.fromMap(item)).toList();
+  }
+}
+
+class MedicineCloudSync {
+  static Future<void> syncMedicine(Medicine medicine) async {
+    await FirebaseFirestore.instance
+        .collection('medicines')
+        .doc(medicine.docId)
+        .set(medicine.toMap());
+  }
+
+  static Future<void> syncAllMedicines(List<Medicine> medicines) async {
+    for (final med in medicines) {
+      await syncMedicine(med);
+    }
   }
 }
