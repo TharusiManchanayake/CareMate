@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'medicine.dart';
 import 'health_screen.dart';
 import 'sos_screen.dart';
@@ -10,7 +12,14 @@ import 'inventory_screen.dart';
 import 'doctor_notes_screen.dart';
 import 'rx_scanner_screen.dart';
 
-void main() {
+void main() async {
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const CareMateApp());
 }
 
