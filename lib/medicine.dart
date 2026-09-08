@@ -10,6 +10,12 @@ class Medicine {
   String time;
   bool isTaken;
   int stockCount;
+  String? lastTakenDate;
+
+  String frequency; // 'Daily' or 'Specific days'
+  List<String> activeDays; // e.g. ['Mon', 'Wed', 'Fri'] — only used if frequency is 'Specific days'
+  String startDate; // "YYYY-MM-DD" — when this medicine becomes active
+  String? endDate; // "YYYY-MM-DD" or null — null means no end date (ongoing)
 
   Medicine({
     required this.name,
@@ -19,7 +25,13 @@ class Medicine {
     required this.time,
     this.isTaken = false,
     this.stockCount = 20,
-  });
+    this.lastTakenDate,
+    this.frequency = 'Daily',
+    List<String>? activeDays,
+    String? startDate,
+    this.endDate,
+  })  : activeDays = activeDays ?? [],
+        startDate = startDate ?? todayString();
 
   Map<String, dynamic> toMap() {
     return {
@@ -30,6 +42,11 @@ class Medicine {
       'time': time,
       'isTaken': isTaken,
       'stockCount': stockCount,
+      'lastTakenDate': lastTakenDate,
+      'frequency': frequency,
+      'activeDays': activeDays,
+      'startDate': startDate,
+      'endDate': endDate,
     };
   }
 
@@ -42,10 +59,55 @@ class Medicine {
       time: map['time'],
       isTaken: map['isTaken'] ?? false,
       stockCount: map['stockCount'] ?? 20,
+      lastTakenDate: map['lastTakenDate'],
+      frequency: map['frequency'] ?? 'Daily',
+      activeDays: map['activeDays'] != null
+          ? List<String>.from(map['activeDays'])
+          : [],
+      startDate: map['startDate'] ?? todayString(),
+      endDate: map['endDate'],
     );
   }
 
   String get docId => name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+
+  static String todayString() => dateToString(DateTime.now());
+
+  static String dateToString(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+
+  static const _weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  void resetIfNewDay() {
+    if (isTaken && lastTakenDate != todayString()) {
+      isTaken = false;
+    }
+  }
+
+  // The core scheduling check: should this medicine appear on
+  // today's list at all?
+  bool isDueToday() {
+    final today = todayString();
+
+    // Hasn't started yet — startDate is later than today.
+    if (startDate.compareTo(today) > 0) return false;
+
+    // Already ended — endDate exists and is earlier than today.
+    if (endDate != null && endDate!.compareTo(today) < 0) return false;
+
+    // If it's a specific-days medicine, check today's weekday name
+    // is in the chosen list. DateTime.now().weekday is 1 (Monday)
+    // through 7 (Sunday), so we subtract 1 to index into our list.
+    if (frequency == 'Specific days') {
+      final todayName = _weekdayNames[DateTime.now().weekday - 1];
+      return activeDays.contains(todayName);
+    }
+
+    return true; // 'Daily' — always due, as long as within date range
+  }
 }
 
 class MedicineStorage {

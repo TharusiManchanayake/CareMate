@@ -71,6 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
+  // The FULL list — every medicine ever added, regardless of
+  // whether it's due today. Caregiver screens (Inventory, Manage
+  // Schedule) should see everything.
   List<Medicine> _medicines = [];
 
   @override
@@ -81,11 +84,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadSavedData() async {
     final saved = await MedicineStorage.loadMedicines();
+    final medicines = saved ?? _defaultMedicines;
+
+    for (final med in medicines) {
+      med.resetIfNewDay();
+    }
 
     setState(() {
-      _medicines = saved ?? _defaultMedicines;
+      _medicines = medicines;
       _isLoading = false;
     });
+
+    _saveData();
   }
 
   void _saveData() {
@@ -152,8 +162,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Replaces the old direct "Add Medicine" access — now goes
-  // through the PIN gate first.
   void _openCaregiverAccess() {
     Navigator.push(
       context,
@@ -204,12 +212,14 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'AI'),
         ],
       ),
- 
     );
   }
 
   Widget _buildHomeTab() {
-    final takenCount = _medicines.where((m) => m.isTaken).length;
+    // Only medicines actually due today show up here — the FULL
+    // list stays intact in _medicines for Inventory/Caregiver use.
+    final todaysMedicines = _medicines.where((m) => m.isDueToday()).toList();
+    final takenCount = todaysMedicines.where((m) => m.isTaken).length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -254,11 +264,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           Text(
-            "You've taken $takenCount of ${_medicines.length} doses today",
+            todaysMedicines.isEmpty
+                ? "No medicines scheduled for today"
+                : "You've taken $takenCount of ${todaysMedicines.length} doses today",
             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
           const SizedBox(height: 20),
-          for (final med in _medicines) ...[
+          for (final med in todaysMedicines) ...[
             _medicineCard(med),
             const SizedBox(height: 12),
           ],
@@ -316,6 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() {
                         med.isTaken = true;
                         med.time = actualTime;
+                        med.lastTakenDate = Medicine.todayString();
                         if (med.stockCount > 0) {
                           med.stockCount--;
                         }
