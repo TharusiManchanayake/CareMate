@@ -1,57 +1,109 @@
 import 'package:flutter/material.dart';
+import 'medicine.dart';
+import 'history_entry.dart';
+import 'doctor_visit.dart';
 
-// A model for one chat message — who sent it, and the text.
 class ChatMessage {
   final String text;
-  final bool isUser; // true = Mary sent it, false = the AI sent it
+  final bool isUser;
 
   ChatMessage({required this.text, required this.isUser});
 }
 
 class AiScreen extends StatefulWidget {
-  const AiScreen({super.key});
+  // The real, live medicine list — passed in from HomeScreen so
+  // this screen can answer using actual current data, not a copy
+  // that could go stale.
+  final List<Medicine> medicines;
+
+  const AiScreen({super.key, required this.medicines});
 
   @override
   State<AiScreen> createState() => _AiScreenState();
 }
 
 class _AiScreenState extends State<AiScreen> {
-  // TextEditingController lets us READ whatever the user types into
-  // a TextField, and also clear it programmatically after sending.
   final TextEditingController _controller = TextEditingController();
 
-  // Start with a couple of example messages already in the chat.
   final List<ChatMessage> _messages = [
-    ChatMessage(text: 'What medicine should I take now?', isUser: true),
     ChatMessage(
-      text: "Right now it's time for Amlodipine 5mg — one tablet after breakfast. Want me to mark it as taken?",
+      text: "Hi Mary! Ask me things like \"what medicine should I take now?\", \"did I miss any doses?\", or \"when's my next appointment?\"",
       isUser: false,
     ),
   ];
 
-  void _sendMessage() {
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendMessage() async {
     final text = _controller.text.trim();
-    if (text.isEmpty) return; // don't send empty messages
+    if (text.isEmpty) return;
 
     setState(() {
       _messages.add(ChatMessage(text: text, isUser: true));
-      // A placeholder canned reply — later this is where we'd call
-      // a real AI API instead of hardcoding a response.
-      _messages.add(ChatMessage(
-        text: "Let me check that for you... (this is a placeholder reply for now)",
-        isUser: false,
-      ));
     });
+    _controller.clear();
 
-    _controller.clear(); // empty the text field after sending
+    // The actual "thinking" step — figure out what's being asked
+    // and pull a real answer from real data.
+    final reply = await _generateReply(text);
+
+    setState(() {
+      _messages.add(ChatMessage(text: reply, isUser: false));
+    });
   }
 
-  @override
-  void dispose() {
-    // Always dispose controllers when the widget is removed, to
-    // free up memory — Dart doesn't do this automatically for you.
-    _controller.dispose();
-    super.dispose();
+  // Very simple keyword matching — not real language understanding,
+  // but genuinely reflects the app's actual current data rather
+  // than a hardcoded script. This is the honest, achievable version
+  // of "AI" without needing a paid LLM API connected.
+  Future<String> _generateReply(String question) async {
+    final lower = question.toLowerCase();
+
+    // "What medicine should I take now / next?"
+    if (lower.contains('medicine') && (lower.contains('now') || lower.contains('next') || lower.contains('take'))) {
+      final due = widget.medicines.where((m) => m.isDueToday() && !m.isTaken).toList();
+      if (due.isEmpty) {
+        return "You've taken everything scheduled for today. Nice work! 🌿";
+      }
+      final next = due.first;
+      return "Next up is ${next.name} — ${next.dosage}, ${next.timing}.";
+    }
+
+    // "Did I miss / how many missed doses?"
+    if (lower.contains('miss')) {
+      final history = await HistoryStorage.loadEntries();
+      final missed = history.where((h) => h.status == 'missed').toList();
+      if (missed.isEmpty) {
+        return "No missed doses in your recent history — you're on track!";
+      }
+      final mostRecent = missed.first;
+      return "You've missed ${missed.length} dose(s) recently. Most recent: ${mostRecent.medicineName} on ${mostRecent.date}.";
+    }
+
+    // "Next appointment?"
+    if (lower.contains('appointment') || lower.contains('doctor')) {
+      final visits = await DoctorVisitStorage.loadVisits();
+      if (visits.isEmpty) {
+        return "You don't have any doctor visits logged yet.";
+      }
+      final latest = visits.first;
+      return "Your most recent visit was with ${latest.doctorName} on ${latest.date}. No upcoming appointment has been scheduled yet.";
+    }
+
+    // "How many medicines / what's my adherence?"
+    if (lower.contains('adherence') || lower.contains('how many')) {
+      final total = widget.medicines.where((m) => m.isDueToday()).length;
+      final taken = widget.medicines.where((m) => m.isDueToday() && m.isTaken).length;
+      return "You've taken $taken of $total doses scheduled for today.";
+    }
+
+    // Fallback — honest about its limits, rather than pretending
+    // to understand everything.
+    return "I'm not sure how to answer that yet — I can help with questions about today's medicines, missed doses, or your doctor visits.";
   }
 
   @override
@@ -70,19 +122,14 @@ class _AiScreenState extends State<AiScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Expanded makes the chat list fill all remaining vertical
-          // space, pushing the input field to the bottom.
           Expanded(
             child: ListView.builder(
               itemCount: _messages.length,
               itemBuilder: (context, index) {
-                final msg = _messages[index];
-                return _chatBubble(msg);
+                return _chatBubble(_messages[index]);
               },
             ),
           ),
-
           const SizedBox(height: 12),
           Row(
             children: [
@@ -100,7 +147,7 @@ class _AiScreenState extends State<AiScreen> {
                       hintText: 'Type a question…',
                       border: InputBorder.none,
                     ),
-                    onSubmitted: (_) => _sendMessage(), // Enter key sends too
+                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
               ),
@@ -121,7 +168,6 @@ class _AiScreenState extends State<AiScreen> {
 
   Widget _chatBubble(ChatMessage msg) {
     return Align(
-      // User messages align right, AI messages align left
       alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),

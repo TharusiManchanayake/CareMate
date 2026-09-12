@@ -192,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildHomeTab(),
             const HealthScreen(),
             const SosScreen(),
-            const AiScreen(),
+            AiScreen(medicines: _medicines),
           ],
         ),
       ),
