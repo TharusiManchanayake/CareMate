@@ -48,6 +48,8 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
                 widget.medicines.remove(med);
               });
               widget.onDataChanged();
+              
+              MedicineCloudSync.deleteMedicine(med);
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD2574C)),

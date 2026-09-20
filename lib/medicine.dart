@@ -144,4 +144,12 @@ class MedicineCloudSync {
       await syncMedicine(med);
     }
   }
+
+
+  static Future<void> deleteMedicine(Medicine medicine) async {
+    await FirebaseFirestore.instance
+        .collection('medicines')
+        .doc(medicine.docId)
+        .delete();
+  }
 }

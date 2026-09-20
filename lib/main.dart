@@ -226,43 +226,43 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          
+          const Text(
+            'Good morning, Mary',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E4038),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
             children: [
-              const Text(
-                'Good morning, Mary',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E4038),
-                ),
+              IconButton(
+                onPressed: _openRxScannerScreen,
+                icon: const Icon(Icons.document_scanner_outlined, color: Color(0xFF1E4038)),
               ),
-              Wrap(
-                children: [
-                  IconButton(
-                    onPressed: _openRxScannerScreen,
-                    icon: const Icon(Icons.document_scanner_outlined, color: Color(0xFF1E4038)),
-                  ),
-                  IconButton(
-                    onPressed: _openDoctorNotesScreen,
-                    icon: const Icon(Icons.medical_information_outlined, color: Color(0xFF1E4038)),
-                  ),
-                  IconButton(
-                    onPressed: _openInventoryScreen,
-                    icon: const Icon(Icons.inventory_2_outlined, color: Color(0xFF1E4038)),
-                  ),
-                  IconButton(
-                    onPressed: _openHistoryScreen,
-                    icon: const Icon(Icons.history, color: Color(0xFF1E4038)),
-                  ),
-                  IconButton(
-                    onPressed: _openCaregiverAccess,
-                    icon: const Icon(Icons.lock_outline, color: Color(0xFF1E4038)),
-                  ),
-                ],
+              IconButton(
+                onPressed: _openDoctorNotesScreen,
+                icon: const Icon(Icons.medical_information_outlined, color: Color(0xFF1E4038)),
+              ),
+              IconButton(
+                onPressed: _openInventoryScreen,
+                icon: const Icon(Icons.inventory_2_outlined, color: Color(0xFF1E4038)),
+              ),
+              IconButton(
+                onPressed: _openHistoryScreen,
+                icon: const Icon(Icons.history, color: Color(0xFF1E4038)),
+              ),
+              IconButton(
+                onPressed: _openCaregiverAccess,
+                icon: const Icon(Icons.lock_outline, color: Color(0xFF1E4038)),
               ),
             ],
           ),
+          const SizedBox(height: 8),
           Text(
             todaysMedicines.isEmpty
                 ? "No medicines scheduled for today"
