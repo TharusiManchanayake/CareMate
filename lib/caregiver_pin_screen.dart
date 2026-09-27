@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'medicine.dart';
+import 'settings.dart';
 import 'caregiver_screen.dart';
-
-const String _caregiverPin = '1234';
 
 class CaregiverPinScreen extends StatefulWidget {
   final List<Medicine> medicines;
   final VoidCallback onDataChanged;
+  final AppSettingsController settingsController;
 
   const CaregiverPinScreen({
     super.key,
     required this.medicines,
     required this.onDataChanged,
+    required this.settingsController,
   });
 
   @override
@@ -29,13 +30,18 @@ class _CaregiverPinScreenState extends State<CaregiverPinScreen> {
   }
 
   void _checkPin() {
-    if (_pinController.text == _caregiverPin) {
+    // FIX: this used to compare against a hardcoded '1234' constant
+    // that no one could ever change without editing code. It now
+    // checks against the PIN stored in AppSettingsController, which
+    // the caregiver can update from the Settings screen.
+    if (_pinController.text == widget.settingsController.settings.caregiverPin) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => CaregiverScreen(
             medicines: widget.medicines,
             onDataChanged: widget.onDataChanged,
+            settingsController: widget.settingsController,
           ),
         ),
       );
@@ -112,4 +118,3 @@ class _CaregiverPinScreenState extends State<CaregiverPinScreen> {
     );
   }
 }
-

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'sos_alert.dart';
+import 'settings.dart';
 
 class SosScreen extends StatefulWidget {
-  const SosScreen({super.key});
+  final AppSettingsController settingsController;
+
+  const SosScreen({super.key, required this.settingsController});
 
   @override
   State<SosScreen> createState() => _SosScreenState();
@@ -13,12 +16,32 @@ class SosScreen extends StatefulWidget {
 class _SosScreenState extends State<SosScreen> {
   bool _isSending = false;
 
-  // Hardcoded for now — a real version would let the caregiver set
-  // this in a settings screen. Being explicit about this limitation
-  // rather than pretending it's fully configurable.
-  static const _caregiverPhone = '+1234567890';
-
   Future<void> _handleSosPress() async {
+    // FIX: the caregiver's phone number used to be a hardcoded
+    // placeholder ('+1234567890') with no way to change it from the
+    // app. It's now read from Settings; if nobody has set it yet,
+    // say so clearly instead of silently trying to dial a fake
+    // number during an actual emergency.
+    final caregiverPhone = widget.settingsController.settings.caregiverPhone.trim();
+    if (caregiverPhone.isEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('No caregiver number set'),
+          content: const Text(
+            'Ask a caregiver to add their phone number in Settings (under Manage schedule) so SOS can call them.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final confirmed = await _showConfirmation();
     if (confirmed != true) return;
 
@@ -53,7 +76,7 @@ class _SosScreenState extends State<SosScreen> {
         const SnackBar(content: Text('Location shared. Opening phone dialer...')),
       );
 
-      await _callCaregiver();
+      await _callCaregiver(caregiverPhone);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -91,8 +114,8 @@ class _SosScreenState extends State<SosScreen> {
     return await Geolocator.getCurrentPosition();
   }
 
-  Future<void> _callCaregiver() async {
-    final uri = Uri(scheme: 'tel', path: _caregiverPhone);
+  Future<void> _callCaregiver(String phone) async {
+    final uri = Uri(scheme: 'tel', path: phone);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }

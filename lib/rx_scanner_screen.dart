@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'add_medicine_screen.dart';
+import 'medicine.dart';
 
 class RxScannerScreen extends StatefulWidget {
   const RxScannerScreen({super.key});
@@ -60,6 +62,33 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
     }
   }
 
+  // FIX: previously the scanner only ever displayed the raw OCR
+  // text — there was no way to turn a scanned prescription into an
+  // actual scheduled medicine, so the caregiver had to re-type
+  // everything by hand in Add Medicine anyway. This takes the first
+  // non-empty line (usually the medicine's name on a label) as a
+  // starting point, opens Add Medicine pre-filled, and — if the
+  // caregiver saves it there — passes that new Medicine straight
+  // back up to whoever opened the scanner (see main.dart), so it's
+  // scheduled in one flow instead of two disconnected screens.
+  Future<void> _addAsMedicine() async {
+    final firstLine = _recognizedText
+        .split('\n')
+        .map((line) => line.trim())
+        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddMedicineScreen(initialName: firstLine),
+      ),
+    );
+
+    if (result != null && result is Medicine && mounted) {
+      Navigator.pop(context, result);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,7 +113,7 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
             // Show the photo preview once one's been taken, otherwise
             // a placeholder box.
             Container(
-              height: 260,
+              height: 220,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -120,7 +149,7 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
 
             if (_isProcessing)
               const Center(child: CircularProgressIndicator())
-            else if (_recognizedText.isNotEmpty)
+            else if (_recognizedText.isNotEmpty) ...[
               Expanded(
                 child: SingleChildScrollView(
                   child: Container(
@@ -151,6 +180,20 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _addAsMedicine,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Use this as a new medicine'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

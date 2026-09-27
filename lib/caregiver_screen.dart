@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'medicine.dart';
 import 'add_medicine_screen.dart';
+import 'notification_service.dart';
+import 'settings.dart';
+import 'settings_screen.dart';
 
 class CaregiverScreen extends StatefulWidget {
   final List<Medicine> medicines;
   final VoidCallback onDataChanged;
+  final AppSettingsController settingsController;
 
   const CaregiverScreen({
     super.key,
     required this.medicines,
     required this.onDataChanged,
+    required this.settingsController,
   });
 
   @override
@@ -20,7 +25,14 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
   Future<void> _openAddMedicineScreen() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddMedicineScreen()),
+      MaterialPageRoute(
+        builder: (context) => AddMedicineScreen(
+          // New medicines start with whatever reminder style the
+          // caregiver picked as their default in Settings, rather
+          // than always defaulting to 'alarm'.
+          initialReminderStyle: widget.settingsController.settings.defaultReminderStyle,
+        ),
+      ),
     );
 
     if (result != null && result is Medicine) {
@@ -28,7 +40,17 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
         widget.medicines.add(result);
       });
       widget.onDataChanged();
+      NotificationService.scheduleForMedicine(result);
     }
+  }
+
+  void _openSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsScreen(controller: widget.settingsController),
+      ),
+    );
   }
 
   void _confirmDelete(Medicine med) {
@@ -48,8 +70,14 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
                 widget.medicines.remove(med);
               });
               widget.onDataChanged();
-              
+              // FIX: onDataChanged() only re-saves the REMAINING
+              // medicines (to SharedPreferences and via
+              // syncAllMedicines to Firestore) — it never told
+              // Firestore to delete the one we just removed, so the
+              // old document just sat there indefinitely. This
+              // explicitly deletes it from the cloud too.
               MedicineCloudSync.deleteMedicine(med);
+              NotificationService.cancelForMedicine(med);
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD2574C)),
@@ -69,6 +97,13 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
         elevation: 0,
         title: const Text('Manage schedule', style: TextStyle(color: Color(0xFF1E4038))),
         iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        actions: [
+          IconButton(
+            onPressed: _openSettings,
+            icon: const Icon(Icons.settings_outlined, color: Color(0xFF1E4038)),
+            tooltip: 'Settings',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),

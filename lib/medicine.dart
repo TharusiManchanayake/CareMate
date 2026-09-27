@@ -17,6 +17,9 @@ class Medicine {
   String startDate; // "YYYY-MM-DD" — when this medicine becomes active
   String? endDate; // "YYYY-MM-DD" or null — null means no end date (ongoing)
 
+  String reminderTime; // "HH:mm", 24-hour — when the daily/weekly reminder fires
+  String reminderStyle; // 'notification' or 'alarm'
+
   Medicine({
     required this.name,
     required this.dosage,
@@ -30,6 +33,8 @@ class Medicine {
     List<String>? activeDays,
     String? startDate,
     this.endDate,
+    this.reminderTime = '08:00',
+    this.reminderStyle = 'alarm',
   })  : activeDays = activeDays ?? [],
         startDate = startDate ?? todayString();
 
@@ -47,6 +52,8 @@ class Medicine {
       'activeDays': activeDays,
       'startDate': startDate,
       'endDate': endDate,
+      'reminderTime': reminderTime,
+      'reminderStyle': reminderStyle,
     };
   }
 
@@ -66,10 +73,19 @@ class Medicine {
           : [],
       startDate: map['startDate'] ?? todayString(),
       endDate: map['endDate'],
+      reminderTime: map['reminderTime'] ?? '08:00',
+      reminderStyle: map['reminderStyle'] ?? 'alarm',
     );
   }
 
   String get docId => name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+
+  // A stable notification id derived from the medicine's name. Kept
+  // to a small positive range (with room to spare below the plugin's
+  // int32 id limit) and multiplied by 10 so NotificationService can
+  // add 1-7 on top of it for per-weekday reminders without colliding
+  // with another medicine's ids.
+  int get notificationId => (docId.hashCode.abs() % 100000) * 10;
 
   static String todayString() => dateToString(DateTime.now());
 
@@ -145,7 +161,13 @@ class MedicineCloudSync {
     }
   }
 
-
+  // FIX: there was previously no way to remove a medicine from
+  // Firestore once it was synced. CaregiverScreen only removed the
+  // medicine from the in-memory/local list, so a "deleted" medicine
+  // would keep existing in the cloud forever (and would even come
+  // back if any future code re-read from Firestore). This mirrors
+  // syncMedicine's doc lookup (by docId) but deletes instead of
+  // writing.
   static Future<void> deleteMedicine(Medicine medicine) async {
     await FirebaseFirestore.instance
         .collection('medicines')

@@ -2,7 +2,15 @@ import 'package:flutter/material.dart';
 import 'medicine.dart';
 
 class AddMedicineScreen extends StatefulWidget {
-  const AddMedicineScreen({super.key});
+  // Lets other screens hand this one a head start: the RX scanner
+  // passes in whatever text it recognized as a starting point for
+  // the name, and CaregiverScreen passes in the caregiver's chosen
+  // default reminder style so new medicines don't always start as
+  // 'alarm' regardless of preference.
+  final String? initialName;
+  final String? initialReminderStyle;
+
+  const AddMedicineScreen({super.key, this.initialName, this.initialReminderStyle});
 
   @override
   State<AddMedicineScreen> createState() => _AddMedicineScreenState();
@@ -19,7 +27,21 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
   bool _hasEndDate = false; // whether the caregiver has opted to set an end date
   DateTime? _endDate; // the actual picked end date, if any
 
+  TimeOfDay _reminderTimeOfDay = const TimeOfDay(hour: 8, minute: 0);
+  String _reminderStyle = 'alarm'; // 'notification' or 'alarm'
+
   static const _allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialName != null && widget.initialName!.trim().isNotEmpty) {
+      _nameController.text = widget.initialName!.trim();
+    }
+    if (widget.initialReminderStyle != null) {
+      _reminderStyle = widget.initialReminderStyle!;
+    }
+  }
 
   @override
   void dispose() {
@@ -42,6 +64,32 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
         _endDate = picked;
       });
     }
+  }
+
+  Future<void> _pickReminderTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTimeOfDay,
+    );
+    if (picked != null) {
+      setState(() {
+        _reminderTimeOfDay = picked;
+      });
+    }
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour12 = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minuteStr = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour12:$minuteStr $period';
+  }
+
+  // "HH:mm" 24-hour, for storage/scheduling.
+  String _reminderTimeAsString() {
+    final hourStr = _reminderTimeOfDay.hour.toString().padLeft(2, '0');
+    final minuteStr = _reminderTimeOfDay.minute.toString().padLeft(2, '0');
+    return '$hourStr:$minuteStr';
   }
 
   void _saveMedicine() {
@@ -70,7 +118,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
           : _dosageController.text.trim(),
       condition: 'General',
       timing: _selectedTiming.toLowerCase(),
-      time: '8:00 AM',
+      time: _formatTimeOfDay(_reminderTimeOfDay),
       frequency: _selectedFrequency,
       // List.from(...) makes a real COPY of _selectedDays, so the
       // saved Medicine isn't left referencing this screen's
@@ -79,11 +127,13 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
       endDate: _hasEndDate && _endDate != null
           ? Medicine.dateToString(_endDate!)
           : null,
+      reminderTime: _reminderTimeAsString(),
+      reminderStyle: _reminderStyle,
     );
 
     // Navigator.pop can optionally carry a RESULT back to whoever
     // pushed this screen — here, we send the new Medicine object
-    // back so HomeScreen can add it to the list.
+    // back so HomeScreen (or the RX scanner) can add it to the list.
     Navigator.pop(context, newMedicine);
   }
 
@@ -136,6 +186,54 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                     });
                   },
                   selectedColor: const Color(0xFF7FA98D),
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF4C6B63),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  backgroundColor: Colors.white,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+
+            // ---- Reminder time ----
+            const Text('Reminder time', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _pickReminderTime,
+              icon: const Icon(Icons.access_time, size: 18),
+              label: Text(_formatTimeOfDay(_reminderTimeOfDay)),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ---- Reminder style ----
+            const Text('Reminder style', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            const SizedBox(height: 4),
+            Text(
+              'Alarm is louder and harder to miss — good for important medicines.',
+              style: TextStyle(fontSize: 11.5, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                {'label': 'Alarm', 'value': 'alarm'},
+                {'label': 'Notification', 'value': 'notification'},
+              ].map((option) {
+                final isSelected = _reminderStyle == option['value'];
+                return ChoiceChip(
+                  label: Text(option['label']!),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    setState(() {
+                      _reminderStyle = option['value']!;
+                    });
+                  },
+                  selectedColor: const Color(0xFF1E4038),
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : const Color(0xFF4C6B63),
                     fontWeight: FontWeight.bold,

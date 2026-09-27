@@ -13,6 +13,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -37,8 +38,24 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // Minification (R8) disabled: google_mlkit_text_recognition
+            // references optional Chinese/Japanese/Korean/Devanagari
+            // language-pack classes this app doesn't depend on, and
+            // R8 fails trying to resolve them. Since this app is not
+            // yet being prepared for Play Store release, shrinking
+            // isn't needed — this sidesteps the issue entirely rather
+            // than hand-writing ProGuard keep/dontwarn rules for
+            // classes we don't use anyway.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
+}
+
+dependencies {
+    // Required by flutter_local_notifications for Java 8+ API support
+    // (java.time, etc.) on older Android API levels.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 kotlin {

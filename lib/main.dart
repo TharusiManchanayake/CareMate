@@ -11,12 +11,22 @@ import 'inventory_screen.dart';
 import 'doctor_notes_screen.dart';
 import 'rx_scanner_screen.dart';
 import 'caregiver_pin_screen.dart';
+import 'notification_service.dart';
+import 'settings.dart';
+
+// One shared settings controller for the whole app's lifetime. It's
+// a ChangeNotifier, so wrapping MaterialApp in an AnimatedBuilder
+// below means changing text size (or anything else in Settings)
+// takes effect immediately everywhere, without restarting the app.
+final AppSettingsController appSettings = AppSettingsController();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await NotificationService.initialize();
+  await appSettings.load();
   runApp(const CareMateApp());
 }
 
@@ -25,10 +35,27 @@ class CareMateApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CareMate',
-      debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
+    return AnimatedBuilder(
+      animation: appSettings,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'CareMate',
+          debugShowCheckedModeBanner: false,
+          // Applies the caregiver's chosen text size to every screen
+          // in the app via MediaQuery, rather than each screen having
+          // to opt in individually.
+          builder: (context, child) {
+            final mediaQuery = MediaQuery.of(context);
+            return MediaQuery(
+              data: mediaQuery.copyWith(
+                textScaler: TextScaler.linear(appSettings.settings.textSize.scale),
+              ),
+              child: child!,
+            );
+          },
+          home: const HomeScreen(),
+        );
+      },
     );
   }
 }
@@ -96,6 +123,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     _saveData();
+    _rescheduleAllReminders();
+  }
+
+  // Re-syncs every medicine's OS-level reminder on each app start.
+  // This is what makes ended medicines' reminders actually stop
+  // (scheduleForMedicine skips anything past its endDate) and keeps
+  // reminders correct if the caregiver edited something outside the
+  // app's own scheduling calls, e.g. after a fresh install/restore.
+  void _rescheduleAllReminders() {
+    for (final med in _medicines) {
+      NotificationService.scheduleForMedicine(med);
+    }
   }
 
   void _saveData() {
@@ -155,11 +194,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openRxScannerScreen() {
-    Navigator.push(
+  // FIX: previously this fired-and-forgot — the RX scanner had no
+  // way to hand a newly created medicine back to Home at all. Now
+  // that RxScannerScreen can pop itself with a Medicine (via its
+  // "Use this as a new medicine" flow), this mirrors how Add
+  // Medicine and Caregiver screen already add + schedule a medicine.
+  Future<void> _openRxScannerScreen() async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const RxScannerScreen()),
     );
+
+    if (result != null && result is Medicine) {
+      setState(() {
+        _medicines.add(result);
+      });
+      _saveData();
+      NotificationService.scheduleForMedicine(result);
+    }
   }
 
   void _openCaregiverAccess() {
@@ -169,9 +221,44 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context) => CaregiverPinScreen(
           medicines: _medicines,
           onDataChanged: _onCaregiverDataChanged,
+          settingsController: appSettings,
         ),
       ),
     );
+  }
+
+  // FIX: Skip used to fire immediately on tap with no confirmation,
+  // unlike deleting a medicine (which does confirm). A single
+  // accidental tap silently logged a real missed dose. This adds
+  // the same confirm-before-acting pattern used elsewhere in the app.
+  Future<void> _confirmSkip(Medicine med) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Skip this dose?'),
+        content: Text('This will mark "${med.name}" as missed for today.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD2574C)),
+            child: const Text('Skip dose', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _logHistory(med, 'missed');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${med.name} marked as skipped')),
+        );
+      }
+    }
   }
 
   @override
@@ -191,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildHomeTab(),
             const HealthScreen(),
-            const SosScreen(),
+            SosScreen(settingsController: appSettings),
             AiScreen(medicines: _medicines),
           ],
         ),
@@ -226,7 +313,12 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
+          // Header is split into two stacked rows (title, then a
+          // Wrap of icons below) rather than one Row — inside a Row,
+          // an unconstrained Wrap reports its full intrinsic width
+          // instead of actually wrapping, so title + icons together
+          // could exceed the screen width. Splitting them lets the
+          // Wrap genuinely wrap onto a second line if it ever needs to.
           const Text(
             'Good morning, Mary',
             style: TextStyle(
@@ -243,22 +335,27 @@ class _HomeScreenState extends State<HomeScreen> {
               IconButton(
                 onPressed: _openRxScannerScreen,
                 icon: const Icon(Icons.document_scanner_outlined, color: Color(0xFF1E4038)),
+                tooltip: 'Scan a prescription',
               ),
               IconButton(
                 onPressed: _openDoctorNotesScreen,
                 icon: const Icon(Icons.medical_information_outlined, color: Color(0xFF1E4038)),
+                tooltip: 'Doctor visits',
               ),
               IconButton(
                 onPressed: _openInventoryScreen,
                 icon: const Icon(Icons.inventory_2_outlined, color: Color(0xFF1E4038)),
+                tooltip: 'Medicine stock',
               ),
               IconButton(
                 onPressed: _openHistoryScreen,
                 icon: const Icon(Icons.history, color: Color(0xFF1E4038)),
+                tooltip: 'Medication log',
               ),
               IconButton(
                 onPressed: _openCaregiverAccess,
                 icon: const Icon(Icons.lock_outline, color: Color(0xFF1E4038)),
+                tooltip: 'Caregiver access & settings',
               ),
             ],
           ),
@@ -370,12 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      _logHistory(med, 'missed');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${med.name} marked as skipped')),
-                      );
-                    },
+                    onPressed: () => _confirmSkip(med),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFBE3E0),
                       foregroundColor: const Color(0xFF9A362D),
