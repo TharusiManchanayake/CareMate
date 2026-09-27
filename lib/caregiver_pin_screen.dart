@@ -1,3 +1,4 @@
+import 'app_colors.dart';
 import 'package:flutter/material.dart';
 import 'medicine.dart';
 import 'settings.dart';
@@ -56,23 +57,23 @@ class _CaregiverPinScreenState extends State<CaregiverPinScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Caregiver access', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Caregiver access', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.lock_outline, size: 40, color: Color(0xFF1E4038)),
+            const Icon(Icons.lock_outline, size: 40, color: AppColors.primary),
             const SizedBox(height: 16),
             const Text(
               'Enter caregiver PIN',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E4038)),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary),
             ),
             const SizedBox(height: 6),
             const Text(
@@ -93,7 +94,7 @@ class _CaregiverPinScreenState extends State<CaregiverPinScreen> {
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
                 ),
               ),
               onSubmitted: (_) => _checkPin(),
@@ -104,7 +105,7 @@ class _CaregiverPinScreenState extends State<CaregiverPinScreen> {
               child: ElevatedButton(
                 onPressed: _checkPin,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E4038),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

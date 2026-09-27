@@ -1,3 +1,4 @@
+import 'app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -136,7 +137,7 @@ class _SosScreenState extends State<SosScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD2574C)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.dangerMain),
             child: const Text('Send Alert', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -151,7 +152,7 @@ class _SosScreenState extends State<SosScreen> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF3B1512), Color(0xFF1E4038)],
+          colors: [Color(0xFF3B1512), AppColors.primary],
         ),
       ),
       child: Center(
@@ -167,11 +168,11 @@ class _SosScreenState extends State<SosScreen> {
                   shape: BoxShape.circle,
                   gradient: const RadialGradient(
                     center: Alignment(-0.3, -0.4),
-                    colors: [Color(0xFFE4685C), Color(0xFFD2574C)],
+                    colors: [Color(0xFFE4685C), AppColors.dangerMain],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD2574C).withOpacity(0.4),
+                      color: AppColors.dangerMain.withOpacity(0.4),
                       blurRadius: 30,
                       spreadRadius: 8,
                     ),

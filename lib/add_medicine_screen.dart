@@ -1,3 +1,4 @@
+import 'app_colors.dart';
 import 'package:flutter/material.dart';
 import 'medicine.dart';
 
@@ -140,15 +141,15 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: const Text(
           'Add a medicine',
-          style: TextStyle(color: Color(0xFF1E4038)),
+          style: TextStyle(color: AppColors.primary),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -185,7 +186,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                       _selectedTiming = option;
                     });
                   },
-                  selectedColor: const Color(0xFF7FA98D),
+                  selectedColor: AppColors.secondary,
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : const Color(0xFF4C6B63),
                     fontWeight: FontWeight.bold,
@@ -233,7 +234,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                       _reminderStyle = option['value']!;
                     });
                   },
-                  selectedColor: const Color(0xFF1E4038),
+                  selectedColor: AppColors.primary,
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : const Color(0xFF4C6B63),
                     fontWeight: FontWeight.bold,
@@ -259,7 +260,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                       _selectedFrequency = option;
                     });
                   },
-                  selectedColor: const Color(0xFF7FA98D),
+                  selectedColor: AppColors.secondary,
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : const Color(0xFF4C6B63),
                     fontWeight: FontWeight.bold,
@@ -292,7 +293,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                         }
                       });
                     },
-                    selectedColor: const Color(0xFF7FA98D),
+                    selectedColor: AppColors.secondary,
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : const Color(0xFF4C6B63),
                     ),
@@ -314,7 +315,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
               title: const Text('This medicine has an end date', style: TextStyle(fontSize: 13.5)),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
-              activeColor: const Color(0xFF7FA98D),
+              activeColor: AppColors.secondary,
             ),
 
             if (_hasEndDate) ...[
@@ -336,7 +337,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
               child: ElevatedButton(
                 onPressed: _saveMedicine,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E4038),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -357,11 +358,11 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
       fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
     );
   }

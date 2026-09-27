@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'medicine.dart';
+import 'app_colors.dart';
 
 class InventoryScreen extends StatelessWidget {
   final List<Medicine> medicines;
@@ -9,12 +10,12 @@ class InventoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Medicine stock', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Medicine stock', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(20),
@@ -34,11 +35,11 @@ class InventoryScreen extends StatelessWidget {
 
     Color barColor;
     if (isLow) {
-      barColor = const Color(0xFFD2574C);
+      barColor = AppColors.dangerMain;
     } else if (fraction < 0.5) {
-      barColor = const Color(0xFFE9A23B);
+      barColor = AppColors.gold;
     } else {
-      barColor = const Color(0xFF7FA98D);
+      barColor = AppColors.secondary;
     }
 
     return Container(
@@ -47,7 +48,7 @@ class InventoryScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE4DDCB)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +87,7 @@ class InventoryScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF9A362D),
+                color: AppColors.dangerFg,
               ),
             ),
           ],

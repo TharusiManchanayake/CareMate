@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'history_entry.dart';
+import 'app_colors.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -34,12 +35,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
         : _allEntries.where((e) => e.status == _selectedFilter.toLowerCase()).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Medication log', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Medication log', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -60,9 +61,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             _selectedFilter = option;
                           });
                         },
-                        selectedColor: const Color(0xFF1E4038),
+                        selectedColor: AppColors.primary,
                         labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : const Color(0xFF4C6B63),
+                          color: isSelected ? Colors.white : AppColors.textSecondary,
                           fontWeight: FontWeight.bold,
                         ),
                         backgroundColor: Colors.white,
@@ -101,7 +102,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE4DDCB)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
@@ -132,16 +133,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     Color fg;
     switch (status) {
       case 'taken':
-        bg = const Color(0xFFE4EFE6);
-        fg = const Color(0xFF2F5B45);
+        bg = AppColors.successBg;
+        fg = AppColors.successFg;
         break;
       case 'missed':
-        bg = const Color(0xFFFBE3E0);
-        fg = const Color(0xFF9A362D);
+        bg = AppColors.dangerBg;
+        fg = AppColors.dangerFg;
         break;
       default:
-        bg = const Color(0xFFFBEBD2);
-        fg = const Color(0xFF93611B);
+        bg = AppColors.warningBg;
+        fg = AppColors.warningFg;
     }
 
     return Container(

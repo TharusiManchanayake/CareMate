@@ -1,3 +1,4 @@
+import 'app_colors.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -92,12 +93,12 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Prescription scanner', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Prescription scanner', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -118,7 +119,7 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE4DDCB)),
+                border: Border.all(color: AppColors.cardBorder),
               ),
               child: _pickedImage == null
                   ? const Center(
@@ -138,7 +139,7 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
                 icon: const Icon(Icons.camera_alt),
                 label: const Text('Take photo'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E4038),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -156,7 +157,7 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE4EFE6),
+                      color: AppColors.successBg,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -167,7 +168,7 @@ class _RxScannerScreenState extends State<RxScannerScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
-                            color: Color(0xFF2F5B45),
+                            color: AppColors.successFg,
                           ),
                         ),
                         const SizedBox(height: 8),

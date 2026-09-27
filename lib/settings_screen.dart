@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'settings.dart';
+import 'app_colors.dart';
 
 class SettingsScreen extends StatefulWidget {
   final AppSettingsController controller;
@@ -11,6 +12,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _pinController;
   late String _defaultReminderStyle;
@@ -20,6 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     final s = widget.controller.settings;
+    _nameController = TextEditingController(text: s.patientName);
     _phoneController = TextEditingController(text: s.caregiverPhone);
     _pinController = TextEditingController(text: s.caregiverPin);
     _defaultReminderStyle = s.defaultReminderStyle;
@@ -28,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _phoneController.dispose();
     _pinController.dispose();
     super.dispose();
@@ -46,6 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
 
     widget.controller.update(AppSettings(
+      patientName: _nameController.text.trim().isEmpty ? 'Mary' : _nameController.text.trim(),
       caregiverPhone: _phoneController.text.trim(),
       caregiverPin: pin,
       defaultReminderStyle: _defaultReminderStyle,
@@ -61,16 +66,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Settings', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Settings', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          const Text('Patient name', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          const SizedBox(height: 4),
+          Text(
+            'Shown in the Home greeting and the AI chat.',
+            style: TextStyle(fontSize: 11.5, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _nameController,
+            decoration: _fieldDecoration('e.g. Mary'),
+          ),
+          const SizedBox(height: 24),
+
           const Text('Text size', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           const SizedBox(height: 4),
           Text(
@@ -86,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 label: Text(size.label),
                 selected: isSelected,
                 onSelected: (_) => setState(() => _textSize = size),
-                selectedColor: const Color(0xFF7FA98D),
+                selectedColor: AppColors.secondary,
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.white : const Color(0xFF4C6B63),
                   fontWeight: FontWeight.bold,
@@ -141,7 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 label: Text(option['label']!),
                 selected: isSelected,
                 onSelected: (_) => setState(() => _defaultReminderStyle = option['value']!),
-                selectedColor: const Color(0xFF1E4038),
+                selectedColor: AppColors.primary,
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.white : const Color(0xFF4C6B63),
                   fontWeight: FontWeight.bold,
@@ -157,7 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: ElevatedButton(
               onPressed: _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E4038),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -177,11 +195,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
     );
   }

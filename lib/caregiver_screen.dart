@@ -1,3 +1,4 @@
+import 'app_colors.dart';
 import 'package:flutter/material.dart';
 import 'medicine.dart';
 import 'add_medicine_screen.dart';
@@ -80,7 +81,7 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
               NotificationService.cancelForMedicine(med);
               Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD2574C)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.dangerMain),
             child: const Text('Remove', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -91,16 +92,16 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Manage schedule', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Manage schedule', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
         actions: [
           IconButton(
             onPressed: _openSettings,
-            icon: const Icon(Icons.settings_outlined, color: Color(0xFF1E4038)),
+            icon: const Icon(Icons.settings_outlined, color: AppColors.primary),
             tooltip: 'Settings',
           ),
         ],
@@ -113,17 +114,17 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFE4EFE6),
+                color: AppColors.successBg,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline, size: 18, color: Color(0xFF2F5B45)),
+                  Icon(Icons.info_outline, size: 18, color: AppColors.successFg),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       "You're editing Mary's medicine schedule. Changes appear on her Home screen immediately.",
-                      style: TextStyle(fontSize: 12, color: Color(0xFF2F5B45)),
+                      style: TextStyle(fontSize: 12, color: AppColors.successFg),
                     ),
                   ),
                 ],
@@ -145,7 +146,7 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE4DDCB)),
+                            border: Border.all(color: AppColors.cardBorder),
                           ),
                           child: Row(
                             children: [
@@ -164,7 +165,7 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
                               ),
                               IconButton(
                                 onPressed: () => _confirmDelete(med),
-                                icon: const Icon(Icons.delete_outline, color: Color(0xFF9A362D)),
+                                icon: const Icon(Icons.delete_outline, color: AppColors.dangerFg),
                               ),
                             ],
                           ),
@@ -176,7 +177,7 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF1E4038),
+        backgroundColor: AppColors.primary,
         onPressed: _openAddMedicineScreen,
         child: const Icon(Icons.add, color: Colors.white),
       ),

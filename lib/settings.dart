@@ -17,12 +17,14 @@ enum AppTextSize {
 }
 
 class AppSettings {
+  String patientName;
   String caregiverPhone;
   String caregiverPin;
   String defaultReminderStyle; // 'alarm' or 'notification'
   AppTextSize textSize;
 
   AppSettings({
+    this.patientName = 'Mary',
     this.caregiverPhone = '',
     this.caregiverPin = '1234',
     this.defaultReminderStyle = 'alarm',
@@ -30,6 +32,7 @@ class AppSettings {
   });
 
   Map<String, dynamic> toMap() => {
+        'patientName': patientName,
         'caregiverPhone': caregiverPhone,
         'caregiverPin': caregiverPin,
         'defaultReminderStyle': defaultReminderStyle,
@@ -38,6 +41,7 @@ class AppSettings {
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
     return AppSettings(
+      patientName: map['patientName'] ?? 'Mary',
       caregiverPhone: map['caregiverPhone'] ?? '',
       caregiverPin: map['caregiverPin'] ?? '1234',
       defaultReminderStyle: map['defaultReminderStyle'] ?? 'alarm',

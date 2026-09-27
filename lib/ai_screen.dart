@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'medicine.dart';
 import 'history_entry.dart';
 import 'doctor_visit.dart';
+import 'app_colors.dart';
 
 class ChatMessage {
   final String text;
@@ -15,8 +16,9 @@ class AiScreen extends StatefulWidget {
   // this screen can answer using actual current data, not a copy
   // that could go stale.
   final List<Medicine> medicines;
+  final String patientName;
 
-  const AiScreen({super.key, required this.medicines});
+  const AiScreen({super.key, required this.medicines, required this.patientName});
 
   @override
   State<AiScreen> createState() => _AiScreenState();
@@ -24,13 +26,18 @@ class AiScreen extends StatefulWidget {
 
 class _AiScreenState extends State<AiScreen> {
   final TextEditingController _controller = TextEditingController();
+  late final List<ChatMessage> _messages;
 
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      text: "Hi Mary! Ask me things like \"what medicine should I take now?\", \"did I miss any doses?\", or \"when's my next appointment?\"",
-      isUser: false,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _messages = [
+      ChatMessage(
+        text: "Hi ${widget.patientName}! Ask me things like \"what medicine should I take now?\", \"did I miss any doses?\", or \"when's my next appointment?\"",
+        isUser: false,
+      ),
+    ];
+  }
 
   @override
   void dispose() {
@@ -118,7 +125,7 @@ class _AiScreenState extends State<AiScreen> {
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1E4038),
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 16),
@@ -139,7 +146,7 @@ class _AiScreenState extends State<AiScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(100),
-                    border: Border.all(color: const Color(0xFFE4DDCB)),
+                    border: Border.all(color: AppColors.cardBorder),
                   ),
                   child: TextField(
                     controller: _controller,
@@ -153,7 +160,7 @@ class _AiScreenState extends State<AiScreen> {
               ),
               const SizedBox(width: 8),
               CircleAvatar(
-                backgroundColor: const Color(0xFFE9A23B),
+                backgroundColor: AppColors.gold,
                 child: IconButton(
                   icon: const Icon(Icons.send, color: Colors.white, size: 18),
                   onPressed: _sendMessage,
@@ -174,9 +181,9 @@ class _AiScreenState extends State<AiScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
-          color: msg.isUser ? const Color(0xFF1E4038) : Colors.white,
+          color: msg.isUser ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: msg.isUser ? null : Border.all(color: const Color(0xFFE4DDCB)),
+          border: msg.isUser ? null : Border.all(color: AppColors.cardBorder),
         ),
         child: Text(
           msg.text,

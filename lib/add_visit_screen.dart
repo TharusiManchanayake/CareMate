@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'doctor_visit.dart';
+import 'app_colors.dart';
 
 class AddVisitScreen extends StatefulWidget {
   const AddVisitScreen({super.key});
@@ -50,12 +51,12 @@ class _AddVisitScreenState extends State<AddVisitScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Log a visit', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Log a visit', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -92,7 +93,7 @@ class _AddVisitScreenState extends State<AddVisitScreen> {
               title: const Text('Prescription attached', style: TextStyle(fontSize: 13.5)),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
-              activeColor: const Color(0xFF7FA98D),
+              activeColor: AppColors.secondary,
             ),
             const SizedBox(height: 20),
 
@@ -101,7 +102,7 @@ class _AddVisitScreenState extends State<AddVisitScreen> {
               child: ElevatedButton(
                 onPressed: _saveVisit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E4038),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -122,11 +123,11 @@ class _AddVisitScreenState extends State<AddVisitScreen> {
       fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
     );
   }

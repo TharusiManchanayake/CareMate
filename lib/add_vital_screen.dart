@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'vital_reading.dart';
+import 'app_colors.dart';
 
 class AddVitalScreen extends StatefulWidget {
   const AddVitalScreen({super.key});
@@ -62,12 +63,12 @@ class _AddVitalScreenState extends State<AddVitalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Log a reading', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Log a reading', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -90,9 +91,9 @@ class _AddVitalScreenState extends State<AddVitalScreen> {
                       _valueController.clear(); // avoid leftover text from a different unit
                     });
                   },
-                  selectedColor: const Color(0xFF7FA98D),
+                  selectedColor: AppColors.secondary,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF4C6B63),
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
                     fontWeight: FontWeight.bold,
                   ),
                   backgroundColor: Colors.white,
@@ -111,11 +112,11 @@ class _AddVitalScreenState extends State<AddVitalScreen> {
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: Color(0xFFE4DDCB)),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
                 ),
               ),
             ),
@@ -126,7 +127,7 @@ class _AddVitalScreenState extends State<AddVitalScreen> {
               child: ElevatedButton(
                 onPressed: _saveReading,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E4038),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

@@ -13,6 +13,7 @@ import 'rx_scanner_screen.dart';
 import 'caregiver_pin_screen.dart';
 import 'notification_service.dart';
 import 'settings.dart';
+import 'app_colors.dart';
 
 // One shared settings controller for the whole app's lifetime. It's
 // a ChangeNotifier, so wrapping MaterialApp in an AnimatedBuilder
@@ -41,6 +42,16 @@ class CareMateApp extends StatelessWidget {
         return MaterialApp(
           title: 'CareMate',
           debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: true,
+            scaffoldBackgroundColor: AppColors.background,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primary,
+              primary: AppColors.primary,
+              secondary: AppColors.secondary,
+              surface: AppColors.background,
+            ),
+          ),
           // Applies the caregiver's chosen text size to every screen
           // in the app via MediaQuery, rather than each screen having
           // to opt in individually.
@@ -107,6 +118,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadSavedData();
+    // Settings (patient name, text size, etc.) can change from a
+    // screen several levels deep (Home -> PIN -> Manage schedule ->
+    // Settings). Listening here means Home reflects those changes
+    // the moment they're saved, not just after some unrelated
+    // rebuild happens to occur.
+    appSettings.addListener(_onSettingsChanged);
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    appSettings.removeListener(_onSettingsChanged);
+    super.dispose();
   }
 
   Future<void> _loadSavedData() async {
@@ -194,11 +221,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // FIX: previously this fired-and-forgot — the RX scanner had no
-  // way to hand a newly created medicine back to Home at all. Now
-  // that RxScannerScreen can pop itself with a Medicine (via its
-  // "Use this as a new medicine" flow), this mirrors how Add
-  // Medicine and Caregiver screen already add + schedule a medicine.
   Future<void> _openRxScannerScreen() async {
     final result = await Navigator.push(
       context,
@@ -227,6 +249,60 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Tapping the profile avatar shows who the app is set up for. The
+  // name itself is a caregiver setting (not editable from here) so
+  // Mary can't accidentally rename herself mid-task; it just points
+  // to where that change actually happens.
+  void _showProfileSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final name = appSettings.settings.patientName;
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: AppColors.primary,
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 2),
+                        const Text('CareMate patient', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'To change this name or other settings, a caregiver can unlock "Manage schedule" from the lock icon and open Settings.',
+                style: TextStyle(fontSize: 12.5, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // FIX: Skip used to fire immediately on tap with no confirmation,
   // unlike deleting a medicine (which does confirm). A single
   // accidental tap silently logged a real missed dose. This adds
@@ -244,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD2574C)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.dangerMain),
             child: const Text('Skip dose', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -265,13 +341,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        backgroundColor: Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: IndexedStack(
           index: _selectedNavIndex,
@@ -279,13 +355,13 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildHomeTab(),
             const HealthScreen(),
             SosScreen(settingsController: appSettings),
-            AiScreen(medicines: _medicines),
+            AiScreen(medicines: _medicines, patientName: appSettings.settings.patientName),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedNavIndex,
-        selectedItemColor: const Color(0xFF1E4038),
+        selectedItemColor: AppColors.primary,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
           setState(() {
@@ -302,29 +378,77 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // The app's brand row: a small emoji "logo" in a colored circle,
+  // the wordmark, and a tappable profile avatar on the right. This
+  // sits above the personal "Good morning" greeting so the app has
+  // a consistent identity even as the greeting/name changes.
+  Widget _buildBrandRow() {
+    final name = appSettings.settings.patientName;
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: const BoxDecoration(
+            color: AppColors.primary,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: const Text('🌿', style: TextStyle(fontSize: 18)),
+        ),
+        const SizedBox(width: 10),
+        const Text(
+          'CareMate',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.primary,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const Spacer(),
+        GestureDetector(
+          onTap: _showProfileSheet,
+          child: CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.secondary,
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildHomeTab() {
     // Only medicines actually due today show up here — the FULL
     // list stays intact in _medicines for Inventory/Caregiver use.
     final todaysMedicines = _medicines.where((m) => m.isDueToday()).toList();
     final takenCount = todaysMedicines.where((m) => m.isTaken).length;
+    final patientName = appSettings.settings.patientName;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildBrandRow(),
+          const SizedBox(height: 20),
+
           // Header is split into two stacked rows (title, then a
           // Wrap of icons below) rather than one Row — inside a Row,
           // an unconstrained Wrap reports its full intrinsic width
           // instead of actually wrapping, so title + icons together
           // could exceed the screen width. Splitting them lets the
           // Wrap genuinely wrap onto a second line if it ever needs to.
-          const Text(
-            'Good morning, Mary',
-            style: TextStyle(
+          Text(
+            'Good morning, $patientName',
+            style: const TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1E4038),
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 8),
@@ -334,27 +458,27 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               IconButton(
                 onPressed: _openRxScannerScreen,
-                icon: const Icon(Icons.document_scanner_outlined, color: Color(0xFF1E4038)),
+                icon: const Icon(Icons.document_scanner_outlined, color: AppColors.primary),
                 tooltip: 'Scan a prescription',
               ),
               IconButton(
                 onPressed: _openDoctorNotesScreen,
-                icon: const Icon(Icons.medical_information_outlined, color: Color(0xFF1E4038)),
+                icon: const Icon(Icons.medical_information_outlined, color: AppColors.primary),
                 tooltip: 'Doctor visits',
               ),
               IconButton(
                 onPressed: _openInventoryScreen,
-                icon: const Icon(Icons.inventory_2_outlined, color: Color(0xFF1E4038)),
+                icon: const Icon(Icons.inventory_2_outlined, color: AppColors.primary),
                 tooltip: 'Medicine stock',
               ),
               IconButton(
                 onPressed: _openHistoryScreen,
-                icon: const Icon(Icons.history, color: Color(0xFF1E4038)),
+                icon: const Icon(Icons.history, color: AppColors.primary),
                 tooltip: 'Medication log',
               ),
               IconButton(
                 onPressed: _openCaregiverAccess,
-                icon: const Icon(Icons.lock_outline, color: Color(0xFF1E4038)),
+                icon: const Icon(Icons.lock_outline, color: AppColors.primary),
                 tooltip: 'Caregiver access & settings',
               ),
             ],
@@ -383,7 +507,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE4DDCB)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,14 +526,14 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFE4EFE6),
+                color: AppColors.successBg,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
                 child: Text(
-                  '✓ Taken at ${med.time}',
+                  'Taken at ${med.time}',
                   style: const TextStyle(
-                    color: Color(0xFF2F5B45),
+                    color: AppColors.successFg,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -418,70 +542,96 @@ class _HomeScreenState extends State<HomeScreen> {
           else
             Row(
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final actualTime = _currentTimeString();
-                      setState(() {
-                        med.isTaken = true;
-                        med.time = actualTime;
-                        med.lastTakenDate = Medicine.todayString();
-                        if (med.stockCount > 0) {
-                          med.stockCount--;
-                        }
-                      });
-                      _saveData();
-                      _logHistory(med, 'taken');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF7FA98D),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text('✓ Taken'),
-                  ),
+                _actionButton(
+                  icon: Icons.check_circle_outline,
+                  label: 'Taken',
+                  background: AppColors.secondary,
+                  foreground: Colors.white,
+                  onPressed: () {
+                    final actualTime = _currentTimeString();
+                    setState(() {
+                      med.isTaken = true;
+                      med.time = actualTime;
+                      med.lastTakenDate = Medicine.todayString();
+                      if (med.stockCount > 0) {
+                        med.stockCount--;
+                      }
+                    });
+                    _saveData();
+                    _logHistory(med, 'taken');
+                  },
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _logHistory(med, 'snoozed');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${med.name} snoozed for 15 minutes')),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFBEBD2),
-                      foregroundColor: const Color(0xFF93611B),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text('⏰ Snooze'),
-                  ),
+                _actionButton(
+                  icon: Icons.snooze,
+                  label: 'Snooze',
+                  background: AppColors.warningBg,
+                  foreground: AppColors.warningFg,
+                  onPressed: () {
+                    _logHistory(med, 'snoozed');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${med.name} snoozed for 15 minutes')),
+                    );
+                  },
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _confirmSkip(med),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFBE3E0),
-                      foregroundColor: const Color(0xFF9A362D),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text('✕ Skip'),
-                  ),
+                _actionButton(
+                  icon: Icons.close,
+                  label: 'Skip',
+                  background: AppColors.dangerBg,
+                  foreground: AppColors.dangerFg,
+                  onPressed: () => _confirmSkip(med),
                 ),
               ],
             ),
         ],
+      ),
+    );
+  }
+
+  // FIX: the old buttons were plain ElevatedButtons with an emoji +
+  // word (e.g. "Snooze") inside a fixed-width Expanded slot. Once
+  // the accessibility text-size setting scales the font up, or on a
+  // narrower phone, "Snooze" no longer fits on one line and Flutter
+  // wraps it mid-word ("Sn" / "ooze"). Wrapping the icon+label row in
+  // a FittedBox(fit: BoxFit.scaleDown) instead shrinks the whole
+  // thing down to fit the available width as one unit — so it either
+  // renders at full size or slightly smaller, but never breaks a
+  // word across two lines. Using Material icons instead of emoji
+  // also gives the three actions a single consistent, formal look.
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required Color background,
+    required Color foreground,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: background,
+          foregroundColor: foreground,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: foreground),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(fontWeight: FontWeight.w600, color: foreground),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

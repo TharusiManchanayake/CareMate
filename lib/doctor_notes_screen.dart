@@ -1,3 +1,4 @@
+import 'app_colors.dart';
 import 'package:flutter/material.dart';
 import 'doctor_visit.dart';
 import 'add_visit_screen.dart';
@@ -42,12 +43,12 @@ class _DoctorNotesScreenState extends State<DoctorNotesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Doctor visits', style: TextStyle(color: Color(0xFF1E4038))),
-        iconTheme: const IconThemeData(color: Color(0xFF1E4038)),
+        title: const Text('Doctor visits', style: TextStyle(color: AppColors.primary)),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -66,7 +67,7 @@ class _DoctorNotesScreenState extends State<DoctorNotesScreen> {
                   },
                 ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF1E4038),
+        backgroundColor: AppColors.primary,
         onPressed: _openAddVisitScreen,
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -80,7 +81,7 @@ class _DoctorNotesScreenState extends State<DoctorNotesScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE4DDCB)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,12 +109,12 @@ class _DoctorNotesScreenState extends State<DoctorNotesScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFE4EFE6),
+                color: AppColors.successBg,
                 borderRadius: BorderRadius.circular(100),
               ),
               child: const Text(
                 'Prescription attached',
-                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF2F5B45)),
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.successFg),
               ),
             ),
           ],

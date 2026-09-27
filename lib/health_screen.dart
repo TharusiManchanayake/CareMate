@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'vital_reading.dart';
 import 'add_vital_screen.dart';
+import 'app_colors.dart';
 
 class HealthScreen extends StatefulWidget {
   const HealthScreen({super.key});
@@ -73,25 +74,25 @@ class _HealthScreenState extends State<HealthScreen> {
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1E4038),
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             'Most recent readings',
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
 
-          _vitalCard('🩺', 'Blood Pressure', _latestBP, const Color(0xFFD2574C)),
+          _vitalCard('🩺', 'Blood Pressure', _latestBP, AppColors.dangerMain),
           const SizedBox(height: 10),
-          _vitalCard('🩸', 'Blood Sugar', _latestSugar, const Color(0xFFE9A23B)),
+          _vitalCard('🩸', 'Blood Sugar', _latestSugar, AppColors.gold),
           const SizedBox(height: 10),
-          _vitalCard('❤️', 'Heart Rate', _latestHeartRate, const Color(0xFF7FA98D)),
+          _vitalCard('❤️', 'Heart Rate', _latestHeartRate, AppColors.secondary),
           const SizedBox(height: 10),
-          _vitalCard('🫁', 'Oxygen', _latestOxygen, const Color(0xFF1E4038)),
+          _vitalCard('🫁', 'Oxygen', _latestOxygen, AppColors.primary),
           const SizedBox(height: 10),
-          _vitalCard('⚖️', 'Weight', _latestWeight, const Color(0xFF7FA98D)),
+          _vitalCard('⚖️', 'Weight', _latestWeight, AppColors.secondary),
           const SizedBox(height: 20),
 
           SizedBox(
@@ -120,7 +121,7 @@ class _HealthScreenState extends State<HealthScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE4DDCB)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
